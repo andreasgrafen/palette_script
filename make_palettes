@@ -9,7 +9,7 @@ from PIL import ImageDraw
 
 
 
-# ----- colour storage ----- #
+# ----- Colour Storage ----- #
 
 # read storage file and remove empty lines
 source      = open('colours.tsv')
@@ -21,7 +21,7 @@ source.close()
 colour_storage = list()
 for colour_entry in colour_list:
 
-    # remove newline
+    # remove newline & split fields
     colour_entry = colour_entry.replace('\n', '')
     colour_data  = colour_entry.split('\t')
 
@@ -46,7 +46,7 @@ colour_count = len(colour_storage)
 
 
 
-# ----- C I R C L E S ----- #
+# ----- Preview Circles ----- #
 
 # create export directory
 if not os.path.exists('circles'):
@@ -70,7 +70,7 @@ for colour in colour_storage:
 
 
 
-# ----- P N G   P A L E T T E ----- #
+# ----- .png Palette ----- #
 
 pixel_size   = 16
 current_spot = 0
@@ -78,10 +78,15 @@ png_canvas   = Image.new('RGBA', (colour_count*pixel_size, pixel_size))
 
 for colour in colour_storage:
 
+    # create canvas
     png_canvas_draw = ImageDraw.Draw(png_canvas)
+
+    # draw pixel
     png_canvas_draw.rectangle(((current_spot, 0), (current_spot+pixel_size, pixel_size)), colour[1])
 
+    # update pixel position
     current_spot = current_spot+pixel_size
 
 
+# export
 png_canvas.save('Catppuccin.png')
