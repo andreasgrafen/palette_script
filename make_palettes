@@ -12,7 +12,7 @@ from PIL import ImageDraw
 # ----- colour storage ----- #
 
 # read storage file and remove empty lines
-source      = open('colours.csv')
+source      = open('colours.tsv')
 colour_list = [line for line in source.readlines() if line.strip()]
 source.close()
 
