@@ -21,7 +21,7 @@ def func_test (flags):
 
 # ----- Make Function ----- #
 
-def func_make (flags):
+def func_palette (flags):
 
 	# --- Config --- #
 	source_file  = 'Catppuccin.tsv'
@@ -292,7 +292,7 @@ def command_handler (args):
 		print('\n--- Commands ---')
 		print(f'Usage: {script_name} <command>')
 		print()
-		print('make              Generate Assets')
+		print('palette           Generate Assets')
 		print('  -a, --all       default; generates all assets')
 		print('  -c, --circles   generate palette preview circles')
 		print('  -p, --palette   generate .png palette file')
