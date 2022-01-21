@@ -1,0 +1,223 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+from PIL import Image
+from PIL import ImageDraw
+
+
+
+
+
+# ----- Test Function ----- #
+
+def func_test (flags):
+	print(flags)
+
+
+
+
+
+# ----- Make Function ----- #
+
+def func_make (flags):
+
+	# --- Config --- #
+	source_file  = 'Catppuccin.tsv'
+	palette_name = 'Catppuccin'
+
+
+
+	# --- Colour Storage --- #
+	def func_make_read_source (source_file):
+
+		print(f'Reading source file: {source_file}')
+
+		# read storage file and remove empty lines
+		source      = open(source_file)
+		colour_list = [line for line in source.readlines() if line.strip()]
+		source.close()
+
+		# remove file header
+		colour_list.pop(0)
+
+		print(f'Processing {len(colour_list)} colours')
+
+		# create internal colour storage
+		colour_storage = list()
+		for colour_entry in colour_list:
+
+			# remove newline & split fields
+			colour_entry = colour_entry.replace('\n', '')
+			colour_data  = colour_entry.split('\t')
+
+			# format data
+			colour_name  = colour_data[0].lower()
+			colour_hsl   = colour_data[3].replace(' ', '').split(',')
+
+			# format HSL values
+			colour_hue           = int(colour_hsl[0])
+			colour_saturation    = int(colour_hsl[1].replace('%', ''))
+			colour_lightness     = int(colour_hsl[2].replace('%', ''))
+			colour_hsl_formatted = 'hsl(%d, %d%%, %d%%)' % (colour_hue, colour_saturation, colour_lightness)
+
+			# push to internal colour storage
+			colour_storage.append([colour_name, colour_hsl_formatted])
+
+		return colour_storage
+
+
+
+	# --- Preview Circles --- #
+	def func_make_cirles (colour_storage, colour_count):
+
+		# create export directory
+		if not os.path.exists('circles'):
+			os.makedirs('circles')
+
+
+		# setup progessbar
+		toolbar_width = colour_count
+		sys.stdout.write('\nGenerating Circles\n[%s]' % (' ' * toolbar_width))
+		sys.stdout.flush()
+		sys.stdout.write('\b' * (toolbar_width+1))
+
+
+		for colour in colour_storage:
+
+			# create canvas
+			circle_canvas = Image.new('RGBA', (4000, 4000))
+
+			# draw circle with current colour
+			circle_canvas_draw = ImageDraw.Draw(circle_canvas)
+			circle_canvas_draw.ellipse((0, 0, 3999, 3999), colour[1])
+
+			# resize and export
+			circle_colour_preview = circle_canvas.resize((40, 40))
+			circle_colour_preview.save(f'circles/{colour[0]}.png')
+
+			# update progessbar
+			sys.stdout.write('=')
+			sys.stdout.flush()
+
+		# end progressbar
+		sys.stdout.write(']\n')
+
+
+
+	# --- .png Palette --- #
+	def func_make_palette (colour_storage, colour_count):
+
+		# setup progessbar
+		toolbar_width = colour_count
+		sys.stdout.write('\nGenerating .png Palette\n[%s]' % (' ' * toolbar_width))
+		sys.stdout.flush()
+		sys.stdout.write('\b' * (toolbar_width+1))
+
+
+		pixel_size   = 16
+		current_spot = 0
+		png_canvas   = Image.new('RGBA', (colour_count*pixel_size, pixel_size))
+
+
+		for colour in colour_storage:
+
+			# create canvas
+			png_canvas_draw = ImageDraw.Draw(png_canvas)
+
+			# draw pixel
+			png_canvas_draw.rectangle(((current_spot, 0), (current_spot+pixel_size, pixel_size)), colour[1])
+
+			# update pixel position
+			current_spot = current_spot+pixel_size
+
+			# update progessbar
+			sys.stdout.write('=')
+			sys.stdout.flush()
+
+
+		# export
+		png_canvas.save(f'{palette_name}.png')
+
+		# end progressbar
+		sys.stdout.write(']\n')
+
+
+
+	# --- Sub Command Handler --- #
+
+	# populate "globals"
+	colour_storage = func_make_read_source(source_file)
+	colour_count   = len(colour_storage)
+
+	# --- Default --- #
+	if len(flags) == 0 or any(flag in flags for flag in ('-a', '--all')):
+		func_make_cirles(colour_storage, colour_count)
+		func_make_palette(colour_storage, colour_count)
+
+		# exit if default action is run
+		return
+
+	# --- Circles --- #
+	if any(flag in flags for flag in ('-c', '--circles')):
+		func_make_cirles(colour_storage, colour_count)
+
+	# --- Palette --- #
+	if any(flag in flags for flag in ('-p', '--palette')):
+		func_make_palette(colour_storage, colour_count)
+
+
+
+
+
+# ----- Command Handler ----- #
+
+def command_handler (args):
+
+	# remove self
+	script_name = args.pop(0)
+
+
+	# --- Help --- #
+	if len(args) == 0 or any(arg in args for arg in ('-h', 'help')):
+
+		print('\n--- Commands ---')
+		print(f'Usage: {script_name} <command>')
+		print()
+		print('make              Generate Assets')
+		print('  -a, --all       default; generates all assets')
+		print('  -c, --circles   generate palette preview circles')
+		print('  -p, --palette   generate .png palette file')
+		print()
+		print('help, --help      show this message')
+		print()
+
+		# terminate script if help is called
+		return
+
+
+
+	# --- Sub Commands --- #
+	else:
+
+		sub_command       = args.pop(0)
+		sub_command_flags = args
+
+		try:
+			# execute sub command based on provided argument
+			globals()[f'func_{sub_command}'](sub_command_flags)
+
+		except:
+			# if sub command doesn't exist throw error
+			print(f'{sub_command} is not a valid sub command.')
+			print(f'Try {script_name} help to get a list of all commands.')
+
+
+
+
+
+# ----- Please Run Me ----- #
+
+if __name__ == '__main__':
+	command_handler(sys.argv)
