@@ -10,11 +10,19 @@ from PIL import ImageDraw
 
 
 
+# ----- Config ----- #
+
+source_file  = 'Catppuccin.tsv'
+palette_name = 'Catppuccin'
+
+
+
+
+
 # ----- Colour Storage ----- #
 
-def read_source ():
+def read_source (source_file):
 
-	source_file = 'colours.tsv'
 	print(f'Reading source file: {source_file}')
 
 	# read storage file and remove empty lines
@@ -127,7 +135,7 @@ def make_palette (colour_storage, colour_count):
 
 
 	# export
-	png_canvas.save('Catppuccin.png')
+	png_canvas.save(f'{palette_name}.png')
 
 	# end progressbar
 	sys.stdout.write(']\n')
@@ -156,8 +164,8 @@ def command_handler (args):
 		# terminate script if help is called
 		return
 
-	# populate globals
-	colour_storage = read_source()
+	# populate "globals"
+	colour_storage = read_source(source_file)
 	colour_count   = len(colour_storage)
 	
 	# circles
