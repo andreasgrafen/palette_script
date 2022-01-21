@@ -16,6 +16,9 @@ source      = open('colours.tsv')
 colour_list = [line for line in source.readlines() if line.strip()]
 source.close()
 
+# remove file header
+colour_list.pop(0)
+
 
 # create internal colour storage
 colour_storage = list()
