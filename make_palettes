@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+import os
+
+from PIL import Image
+from PIL import ImageDraw
+
+
+
+
+
+# ----- colour storage ----- #
+
+# read storage file and remove empty lines
+source      = open('colours.csv')
+colour_list = [line for line in source.readlines() if line.strip()]
+source.close()
+
+
+# create internal colour storage
+colour_storage = list()
+for colour_entry in colour_list:
+
+    # remove newline
+    colour_entry = colour_entry.replace('\n', '')
+    colour_data  = colour_entry.split('\t')
+
+    # format data
+    colour_name  = colour_data[0].lower()
+    colour_hsl   = colour_data[3].replace(' ', '').split(',')
+
+    # format HSL values
+    colour_hue           = int(colour_hsl[0])
+    colour_saturation    = int(colour_hsl[1].replace('%', ''))
+    colour_lightness     = int(colour_hsl[2].replace('%', ''))
+    colour_hsl_formatted = 'hsl(%d, %d%%, %d%%)' % (colour_hue, colour_saturation, colour_lightness)
+
+    # push to internal colour storage
+    colour_storage.append([colour_name, colour_hsl_formatted])
+
+
+# colour count
+colour_count = len(colour_storage)
+
+
+
+
+
+# ----- C I R C L E S ----- #
+
+# create export directory
+if not os.path.exists('circles'):
+    os.makedirs('circles')
+
+
+for colour in colour_storage:
+
+    # create canvas
+    circle_canvas = Image.new('RGBA', (4000, 4000))
+
+    # draw circle with current colour
+    circle_canvas_draw = ImageDraw.Draw(circle_canvas)
+    circle_canvas_draw.ellipse((0, 0, 3999, 3999), colour[1])
+
+    # resize and export
+    circle_colour_preview = circle_canvas.resize((40, 40))
+    circle_colour_preview.save(f'circles/{colour[0]}.png')
+
+
+
+
+
+# ----- P N G   P A L E T T E ----- #
+
+pixel_size   = 16
+current_spot = 0
+png_canvas   = Image.new('RGBA', (colour_count*pixel_size, pixel_size))
+
+for colour in colour_storage:
+
+    png_canvas_draw = ImageDraw.Draw(png_canvas)
+    png_canvas_draw.rectangle(((current_spot, 0), (current_spot+pixel_size, pixel_size)), colour[1])
+
+    current_spot = current_spot+pixel_size
+
+
+png_canvas.save('Catppuccin.png')
