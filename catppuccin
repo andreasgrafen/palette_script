@@ -27,6 +27,11 @@ def func_make (flags):
 	source_file  = 'Catppuccin.tsv'
 	palette_name = 'Catppuccin'
 
+	colour_circle_size         = 40
+	png_palette_pixel_size     = 16
+	palette_preview_height     = 70
+	palette_preview_pixel_size = 40
+
 
 
 	# --- Colour Storage --- #
@@ -87,14 +92,14 @@ def func_make (flags):
 		for colour in colour_storage:
 
 			# create canvas
-			circle_canvas = Image.new('RGBA', (4000, 4000))
+			circle_canvas = Image.new('RGBA', (colour_circle_size * 100, colour_circle_size * 100))
 
 			# draw circle with current colour
 			circle_canvas_draw = ImageDraw.Draw(circle_canvas)
-			circle_canvas_draw.ellipse((0, 0, 3999, 3999), colour[1])
+			circle_canvas_draw.ellipse((0, 0, colour_circle_size * 100, colour_circle_size * 100), colour[1])
 
 			# resize and export
-			circle_colour_preview = circle_canvas.resize((40, 40))
+			circle_colour_preview = circle_canvas.resize((colour_circle_size, colour_circle_size))
 			circle_colour_preview.save(f'circles/{colour[0]}.png')
 
 			# update progessbar
@@ -116,7 +121,7 @@ def func_make (flags):
 		sys.stdout.write('\b' * (toolbar_width+1))
 
 
-		pixel_size   = 16
+		pixel_size   = png_palette_pixel_size
 		current_spot = 0
 		png_canvas   = Image.new('RGBA', (colour_count*pixel_size, pixel_size))
 
@@ -145,6 +150,103 @@ def func_make (flags):
 
 
 
+	# --- Themed Palettes --- #
+	def func_make_themed (colour_storage):
+
+		# strip colours
+		morning_colours = ['flamingo', 'mauve', 'pink', 'maroon', 'red', 'peach', 'yellow', 'green', 'teal', 'blue', 'sky']
+		night_colours   = ['rosewater', 'lavender', 'black0', 'black1', 'black2', 'black3', 'black4', 'gray0', 'gray1', 'gray2', 'white']
+		morning_palette = {colour[0]:colour[1:] for colour in colour_storage if colour[0] in morning_colours}
+		night_palette   = {colour[0]:colour[1:] for colour in colour_storage if colour[0] in night_colours}
+
+
+		# prepare variables
+		morning_colour_count  = len(morning_palette)
+		night_colour_count    = len(night_palette)
+		palette_height        = palette_preview_height * 100
+		pixel_size            = palette_preview_pixel_size * 100
+		pixel_padding         = (palette_height-pixel_size)/2
+		morning_palette_width = int((morning_colour_count*(pixel_size+pixel_padding))-pixel_padding+palette_height/2)
+		night_palette_width   = int((night_colour_count*(pixel_size+pixel_padding))-pixel_padding+palette_height/2)
+
+		# create canvases
+		morning_canvas = Image.new('RGBA', (morning_palette_width, palette_height))
+		night_canvas   = Image.new('RGBA', (night_palette_width, palette_height))
+
+
+		# - Morning Palette - #
+		# setup progessbar
+		toolbar_width = morning_colour_count
+		sys.stdout.write('\nGenerating Morning Palette\n[%s]' % (' ' * toolbar_width))
+		sys.stdout.flush()
+		sys.stdout.write('\b' * (toolbar_width+1))
+
+
+		# create background
+		morning_canvas_draw = ImageDraw.Draw(morning_canvas)
+		morning_canvas_draw.ellipse((0, 0, palette_height, palette_height), night_palette['black0'][0])
+		morning_canvas_draw.ellipse((morning_palette_width-palette_height, 0, morning_palette_width, palette_height), night_palette['black0'][0])
+		morning_canvas_draw.rectangle(((palette_height/2, 0), (morning_palette_width-palette_height/2, palette_height)), night_palette['black0'][0])
+
+
+		# create circles
+		current_spot = 0
+		for colour in morning_palette:
+
+			morning_canvas_draw.ellipse((pixel_padding+current_spot, pixel_padding, (palette_height-pixel_padding)+current_spot, palette_height-pixel_padding), morning_palette[colour][0])
+			current_spot = current_spot+(palette_height-pixel_padding)
+
+			# update progessbar
+			sys.stdout.write('=')
+			sys.stdout.flush()
+
+
+		# resize and export
+		morning_canvas_preview = morning_canvas.resize((int(morning_palette_width/100), palette_preview_height))
+		morning_canvas_preview.save('morning.png')
+
+		# end progressbar
+		sys.stdout.write(']\n')
+
+
+		# - Night Palette - #
+		# setup progessbar
+		toolbar_width = night_colour_count
+		sys.stdout.write('\nGenerating Night Palette\n[%s]' % (' ' * toolbar_width))
+		sys.stdout.flush()
+		sys.stdout.write('\b' * (toolbar_width+1))
+
+
+		# create background
+		night_canvas_draw = ImageDraw.Draw(night_canvas)
+		night_canvas_draw.ellipse((0, 0, palette_height, palette_height), night_palette['black0'][0])
+		night_canvas_draw.ellipse((night_palette_width-palette_height, 0, night_palette_width, palette_height), night_palette['black0'][0])
+		night_canvas_draw.rectangle(((palette_height/2, 0), (night_palette_width-palette_height/2, palette_height)), night_palette['black0'][0])
+
+
+		# create circles
+		current_spot = 0
+		for colour in night_palette:
+
+			night_canvas_draw.ellipse((pixel_padding+current_spot, pixel_padding, (palette_height-pixel_padding)+current_spot, palette_height-pixel_padding), night_palette[colour][0])
+			current_spot = current_spot+(palette_height-pixel_padding)
+
+			# update progessbar
+			sys.stdout.write('=')
+			sys.stdout.flush()
+
+
+		# resize and export
+		night_canvas_preview = night_canvas.resize((int(night_palette_width/100), palette_preview_height))
+		night_canvas_preview.save('night.png')
+
+		# end progressbar
+		sys.stdout.write(']\n')
+
+
+
+
+
 	# --- Sub Command Handler --- #
 
 	# populate "globals"
@@ -155,6 +257,7 @@ def func_make (flags):
 	if len(flags) == 0 or any(flag in flags for flag in ('-a', '--all')):
 		func_make_cirles(colour_storage, colour_count)
 		func_make_palette(colour_storage, colour_count)
+		func_make_themed(colour_storage)
 
 		# exit if default action is run
 		return
@@ -166,6 +269,10 @@ def func_make (flags):
 	# --- Palette --- #
 	if any(flag in flags for flag in ('-p', '--palette')):
 		func_make_palette(colour_storage, colour_count)
+
+	# --- Themed Palettes --- #
+	if any(flag in flags for flag in ('-t', '--themed')):
+		func_make_themed(colour_storage)
 
 
 
@@ -189,6 +296,7 @@ def command_handler (args):
 		print('  -a, --all       default; generates all assets')
 		print('  -c, --circles   generate palette preview circles')
 		print('  -p, --palette   generate .png palette file')
+		print('  -t, --themed    generate morning & night palettes')
 		print()
 		print('help, --help      show this message')
 		print()
